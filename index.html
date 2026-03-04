@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Hub - Web App on Mobile</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body class="light-mode">
+
+    <nav>
+        <div class="logo">ModernHub</div>
+        <button id="theme-toggle">🌓 Change Mode</button>
+    </nav>
+
+    <header>
+        <h1>ยินดีต้อนรับสู่โปรเจกต์มือถือ</h1>
+        <p>สร้าง พัฒนา และ Deploy ทั้งหมดผ่าน Smartphone</p>
+    </header>
+
+    <main>
+        <section class="filter-section">
+            <button class="filter-btn active" onclick="filterCategory('all')">ทั้งหมด</button>
+            <button class="filter-btn" onclick="filterCategory('tech')">เทคโนโลยี</button>
+            <button class="filter-btn" onclick="filterCategory('design')">ดีไซน์</button>
+        </section>
+
+        <div class="card-grid" id="content-grid">
+            <div class="card" data-category="tech">
+                <h3>Web Development</h3>
+                <p>เรียนรู้การเขียนโค้ด HTML/CSS ง่ายๆ</p>
+            </div>
+            <div class="card" data-category="design">
+                <h3>UI/UX Design</h3>
+                <p>หลักการออกแบบเว็บไซต์ให้ทันสมัย</p>
+            </div>
+            <div class="card" data-category="tech">
+                <h3>GitHub Mobile</h3>
+                <p>จัดการ Repository ได้ทุกที่ทุกเวลา</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
