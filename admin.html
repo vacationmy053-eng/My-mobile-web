@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - ຈັດການເພງ</title>
+    <style>
+        :root { --bg-color: #0a0a0a; --surface-color: #1e1e1e; --text-main: #f8f9fa; --chord-color: #00e676; --danger-color: #ff5252; --border-color: #333; --font-main: 'Phetsarath OT', 'Noto Sans Lao', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: var(--font-main); padding: 20px; }
+        .admin-container { max-width: 600px; margin: 0 auto; }
+        .btn-back { text-decoration: none; color: #888; display: block; margin-bottom: 20px; }
+        .song-form { background: var(--surface-color); padding: 20px; border-radius: 15px; border: 1px solid var(--border-color); margin-bottom: 30px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: var(--chord-color); }
+        input, textarea { width: 100%; padding: 12px; background: #111; border: 1px solid var(--border-color); color: white; border-radius: 8px; font-family: var(--font-main); }
+        .image-upload { border: 2px dashed var(--border-color); padding: 20px; text-align: center; border-radius: 10px; cursor: pointer; margin-bottom: 10px; }
+        #img-prev { width: 100px; height: 100px; object-fit: cover; display: none; margin: 10px auto; border-radius: 8px; border: 2px solid var(--chord-color); }
+        .btn-save { background: var(--chord-color); color: #000; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .song-item { background: var(--surface-color); padding: 10px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <a href="index.html" class="btn-back">← ກັບຄືນໜ້າຫຼັກ</a>
+        <h1 style="color:var(--chord-color); margin-bottom:20px;">ຈັດການບົດເພງ</h1>
+        
+        <div class="song-form">
+            <div class="image-upload" onclick="document.getElementById('inp-img').click()">
+                <div id="up-text">📷 ກົດເພື່ອເລືອກຮູບເພງ</div>
+                <img id="img-prev">
+                <input type="file" id="inp-img" accept="image/*" style="display:none" onchange="prev(event)">
+            </div>
+            <div class="form-group"><label>ຊື່ເພງ</label><input type="text" id="t"></div>
+            <div class="form-group"><label>ນັກຮ້ອງ</label><input type="text" id="a"></div>
+            <div class="form-group"><label>ເນື້ອເພງ [C]...</label><textarea id="c" rows="6"></textarea></div>
+            <button class="btn-save" onclick="save()">ບັນທຶກເພງ</button>
+        </div>
+
+        <div id="list"></div>
+    </div>
+
+    <script>
+        let songs = JSON.parse(localStorage.getItem('my_chord_songs')) || [];
+        let curImg = "";
+
+        function prev(e) {
+            const r = new FileReader();
+            r.onload = (f) => { curImg = f.target.result; document.getElementById('img-prev').src = curImg; document.getElementById('img-prev').style.display='block'; document.getElementById('up-text').style.display='none'; };
+            r.readAsDataURL(e.target.files[0]);
+        }
+
+        function save() {
+            const t = document.getElementById('t').value, a = document.getElementById('a').value, c = document.getElementById('c').value;
+            if(!t || !a || !c) return alert("ກະລຸນາກອກໃຫ້ຄົບ!");
+            songs.push({ id: Date.now(), title: t, artist: a, content: c, image: curImg });
+            localStorage.setItem('my_chord_songs', JSON.stringify(songs));
+            location.reload();
+        }
+
+        function del(i) { if(confirm("ລຶບເພງນີ້?")) { songs.splice(i,1); localStorage.setItem('my_chord_songs', JSON.stringify(songs)); render(); } }
+
+        function render() {
+            document.getElementById('list').innerHTML = songs.map((s, i) => `
+                <div class="song-item">
+                    <div style="display:flex; align-items:center; gap:10px">
+                        <img src="${s.image || ''}" style="width:40px; height:40px; object-fit:cover; border-radius:5px; background:#333">
+                        <div><b>${s.title}</b><br><small>${s.artist}</small></div>
+                    </div>
+                    <button onclick="del(${i})" style="color:var(--danger-color); background:none; border:none; cursor:pointer">ລຶບ</button>
+                </div>
+            `).join('');
+        }
+        render();
+    </script>
+</body>
+</html>

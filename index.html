@@ -1,48 +1,108 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="lo">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Hub - Web App on Mobile</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>PT Chord - ໜ້າຫຼັກ</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --surface-color: #1a1a1a;
+            --text-main: #f8f9fa;
+            --text-muted: #adb5bd;
+            --chord-color: #00e676;
+            --border-color: #333;
+            --font-main: 'Phetsarath OT', 'Noto Sans Lao', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: var(--font-main); padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+
+        /* Nav & Profile */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 50px; border: 1px solid var(--border-color); }
+        .profile-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .profile-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--chord-color); }
+        .user-name { font-weight: bold; font-size: 0.95rem; }
+        .btn-admin-nav { background: transparent; color: var(--chord-color); border: 1px solid var(--chord-color); padding: 8px 16px; border-radius: 20px; text-decoration: none; font-size: 0.85rem; font-weight: bold; transition: 0.3s; }
+        .btn-admin-nav:hover { background: var(--chord-color); color: #000; }
+
+        /* Search */
+        .search-container { position: sticky; top: 10px; z-index: 100; background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(10px); padding: 10px 0; margin-bottom: 30px; }
+        .search-input { width: 100%; padding: 14px 25px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 50px; color: white; font-size: 1.1rem; font-family: var(--font-main); outline: none; }
+
+        /* Grid */
+        .song-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+        .song-card { background: var(--surface-color); border-radius: 15px; overflow: hidden; border: 1px solid var(--border-color); text-decoration: none; color: inherit; transition: 0.3s; display: flex; flex-direction: column; }
+        .song-card:hover { transform: translateY(-5px); border-color: var(--chord-color); }
+        .card-image { width: 100%; height: 160px; object-fit: cover; background: #222; }
+        .card-content { padding: 15px; }
+        .card-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-artist { font-size: 0.9rem; color: var(--chord-color); }
+    </style>
 </head>
-<body class="light-mode">
-
-    <nav>
-        <div class="logo">ModernHub</div>
-        <button id="theme-toggle">🌓 Change Mode</button>
-    </nav>
-
-    <header>
-        <h1>ยินดีต้อนรับสู่โปรเจกต์มือถือ</h1>
-        <p>สร้าง พัฒนา และ Deploy ทั้งหมดผ่าน Smartphone</p>
-    </header>
-
-    <main>
-        <section class="filter-section">
-            <button class="filter-btn active" onclick="filterCategory('all')">ทั้งหมด</button>
-            <button class="filter-btn" onclick="filterCategory('tech')">เทคโนโลยี</button>
-            <button class="filter-btn" onclick="filterCategory('design')">ดีไซน์</button>
-        </section>
-
-        <div class="card-grid" id="content-grid">
-            <div class="card" data-category="tech">
-                <h3>Web Development</h3>
-                <p>เรียนรู้การเขียนโค้ด HTML/CSS ง่ายๆ</p>
+<body>
+    <div class="container">
+        <nav class="top-nav">
+            <div class="profile-area" onclick="document.getElementById('file-input').click()">
+                <img id="user-pic" src="https://www.w3schools.com/howto/img_avatar.png" class="profile-pic">
+                <span class="user-name" id="display-name" onclick="editName(event)">ຜູ້ໃຊ້ໃໝ່</span>
+                <input type="file" id="file-input" accept="image/*" onchange="updateProfilePic(event)" style="display:none">
             </div>
-            <div class="card" data-category="design">
-                <h3>UI/UX Design</h3>
-                <p>หลักการออกแบบเว็บไซต์ให้ทันสมัย</p>
-            </div>
-            <div class="card" data-category="tech">
-                <h3>GitHub Mobile</h3>
-                <p>จัดการ Repository ได้ทุกที่ทุกเวลา</p>
-            </div>
+            <a href="admin.html" class="btn-admin-nav">⚙️ ຈັດການເພງ</a>
+        </nav>
+
+        <header style="text-align:center; margin-bottom:25px;">
+            <h1 style="color:var(--chord-color)">ຄັງເພງສ່ວນຕົວ</h1>
+        </header>
+
+        <div class="search-container">
+            <input type="text" class="search-input" id="search-box" placeholder="ຄົ້ນຫາຊື່ເພງ ຫຼື ຊື່ນັກຮ້ອງ..." oninput="filterSongs()">
         </div>
-    </main>
 
-    <script src="script.js"></script>
+        <div id="song-grid" class="song-grid"></div>
+    </div>
+
+    <script>
+        const DEFAULT_IMG = "https://via.placeholder.com/150?text=No+Image";
+        let songs = JSON.parse(localStorage.getItem('my_chord_songs')) || [];
+
+        window.onload = () => {
+            if(localStorage.getItem('user_profile_name')) document.getElementById('display-name').innerText = localStorage.getItem('user_profile_name');
+            if(localStorage.getItem('user_profile_pic')) document.getElementById('user-pic').src = localStorage.getItem('user_profile_pic');
+            renderSongs(songs);
+        };
+
+        function updateProfilePic(event) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('user-pic').src = e.target.result;
+                localStorage.setItem('user_profile_pic', e.target.result);
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function editName(event) {
+            event.stopPropagation();
+            const n = prompt("ໃສ່ຊື່ຂອງທ່ານ:", document.getElementById('display-name').innerText);
+            if(n) { document.getElementById('display-name').innerText = n; localStorage.setItem('user_profile_name', n); }
+        }
+
+        function renderSongs(data) {
+            document.getElementById('song-grid').innerHTML = data.map(s => `
+                <a href="player.html?id=${s.id}" class="song-card">
+                    <img src="${s.image || DEFAULT_IMG}" class="card-image">
+                    <div class="card-content">
+                        <div class="card-title">${s.title}</div>
+                        <div class="card-artist">${s.artist}</div>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+        function filterSongs() {
+            const t = document.getElementById('search-box').value.toLowerCase();
+            renderSongs(songs.filter(s => s.title.toLowerCase().includes(t) || s.artist.toLowerCase().includes(t)));
+        }
+    </script>
 </body>
 </html>
-

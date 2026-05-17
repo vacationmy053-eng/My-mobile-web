@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PT Chord - Player</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --surface-color: rgba(26, 26, 26, 0.95);
+            --text-main: #f8f9fa;
+            --text-muted: #adb5bd;
+            --chord-color: #00e676; 
+            --border-color: #333;
+            --accent-color: #2979ff;
+            --font-main: 'Phetsarath OT', 'Noto Sans Lao', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            padding-bottom: 100px; 
+            overflow-x: hidden;
+        }
+
+        /* --- Loading Screen Styles --- */
+        #loading-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+
+        .logo-loader {
+            width: 150px;
+            height: 150px;
+            background-color: var(--chord-color); 
+            -webkit-mask: url('logo.png') no-repeat center / contain;
+            mask: url('logo.png') no-repeat center / contain;
+            animation: pulse 1.2s infinite alternate ease-in-out;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: var(--text-main);
+            font-family: var(--font-main);
+            letter-spacing: 2px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            100% { 
+                transform: scale(1.05); 
+                opacity: 1; 
+                filter: drop-shadow(0px 0px 15px rgba(0, 230, 118, 0.6));
+            }
+        }
+
+        /* --- ແຖບດ້ານເທິງ --- */
+        .sticky-header {
+            position: sticky; top: 0;
+            background: var(--surface-color);
+            backdrop-filter: blur(15px);
+            padding: 10px 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+        }
+
+        .back-btn { text-decoration: none; color: var(--text-main); font-size: 1.4rem; line-height: 1; padding-right: 15px;}
+
+        .top-controls {
+            display: flex; align-items: center; gap: 8px;
+            background: #1a1a1a; padding: 4px 6px; border-radius: 30px; border: 1px solid var(--border-color);
+        }
+
+        .btn-top {
+            background: #333; border: none; color: white;
+            width: 32px; height: 32px; border-radius: 50%;
+            font-size: 1.2rem; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-top:active { background: var(--chord-color); color: #000; }
+
+        .key-capo-display {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-width: 60px; line-height: 1.1;
+        }
+        .key-badge { color: var(--chord-color); font-weight: bold; font-size: 0.95rem; }
+        .capo-badge { color: var(--text-muted); font-size: 0.75rem; }
+
+        .btn-icon { 
+            background: transparent; border: 1px solid #555; color: #aaa; 
+            width: 32px; height: 32px; border-radius: 50%; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; margin-left: 5px;
+            font-size: 1rem;
+        }
+        .btn-icon:active { background: #444; color: white; }
+
+        /* --- ສ່ວນເນື້ອເພງ ແລະ ຄອດ --- */
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .song-details { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; align-items: center;}
+        .song-cover { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: #222;}
+        .song-info-text h1 { font-size: 1.2rem; margin-bottom: 2px; }
+        .song-info-text p { color: var(--chord-color); font-size: 0.85rem; }
+
+        .section-header { color: var(--chord-color); font-weight: bold; font-size: 1.1em; margin: 25px 0 10px 0; border-left: 3px solid var(--chord-color); padding-left: 10px;}
+        .lyric-line { display: flex; flex-wrap: wrap; margin-bottom: 15px; line-height: 2.8; }
+        .word-group { display: inline-flex; flex-direction: column; margin-right: 5px; vertical-align: bottom; justify-content: flex-end; }
+        .chord { color: var(--chord-color); font-weight: bold; font-family: Arial, sans-serif; font-size: 1em; line-height: 1; margin-bottom: 5px; }
+        .lyric { font-size: 1.1em; color: var(--text-main); white-space: pre; line-height: 1.2; }
+
+        /* --- ແຖບຄວບຄຸມດ້ານລຸ່ມແບບນ້ອຍ --- */
+        .floating-panel {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--surface-color); border: 1px solid var(--border-color);
+            padding: 8px 15px; border-radius: 40px;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            width: max-content; z-index: 100;
+        }
+
+        .control-group { display: flex; align-items: center; gap: 4px; }
+        .btn-btm { background: #333; border: none; color: white; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer; font-weight: bold;}
+        .btn-btm:active { background: #555; }
+        
+        .btn-play {
+            background: var(--chord-color); color: #000; border: none;
+            width: 48px; height: 48px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
+        }
+        .val-text { font-weight: bold; font-size: 0.95rem; min-width: 20px; text-align: center; color: var(--chord-color); }
+
+        /* --- ໂໝດແກ້ໄຂເນື້ອເພງ --- */
+        #edit-container { display: none; margin-top: 10px; }
+        .edit-textarea {
+            width: 100%; height: 350px; background: #111; color: #fff;
+            border: 1px solid var(--border-color); border-radius: 10px;
+            padding: 15px; font-family: var(--font-main); font-size: 1rem;
+            resize: none; outline: none; line-height: 1.5; margin-bottom: 15px;
+        }
+        .edit-textarea:focus { border-color: var(--chord-color); }
+        .btn-save { background: var(--chord-color); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 1rem; cursor: pointer;}
+        .btn-cancel { background: #333; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 1rem; cursor: pointer; margin-top: 10px;}
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="logo-loader"></div>
+
+    </div>
+
+    <header class="sticky-header">
+        <a href="index.html" class="back-btn">✕</a>
+        <div style="display: flex; align-items: center;">
+            <div class="top-controls" id="key-controls">
+                <button class="btn-top" onclick="changeTranspose(-1)">-</button>
+                <div class="key-capo-display">
+                    <span class="key-badge" id="key-badge">Key: C</span>
+                    <span class="capo-badge" id="capo-badge">Capo: 0</span>
+                </div>
+                <button class="btn-top" onclick="changeTranspose(1)">+</button>
+            </div>
+            <button class="btn-icon" id="edit-btn" onclick="toggleEditMode()" title="ແກ້ໄຂເນື້ອເພງ">✏️</button>
+            <button class="btn-icon" onclick="resetSettings()" title="ຣີເຊັດຄີ">↺</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="song-header" class="song-details"></section>
+        
+        <div id="chord-content"></div>
+
+        <div id="edit-container">
+            <div style="color:var(--chord-color); margin-bottom:10px; font-weight:bold;">ແກ້ໄຂເນື້ອເພງ & ຄອດ (ໃສ່ຄອດໃນວົງເລັບ [C])</div>
+            <textarea id="edit-textarea" class="edit-textarea" spellcheck="false"></textarea>
+            <button class="btn-save" onclick="saveSongEdit()">💾 ບັນທຶກການປ່ຽນແປງ</button>
+            <button class="btn-cancel" onclick="toggleEditMode()">✕ ຍົກເລີກ</button>
+        </div>
+    </main>
+
+    <div class="floating-panel" id="bottom-panel">
+        <div class="control-group">
+            <button class="btn-btm" onclick="changeFontSize(-2)">A-</button>
+            <button class="btn-btm" onclick="changeFontSize(2)">A+</button>
+        </div>
+
+        <button class="btn-play" id="play-btn" onclick="toggleAutoScroll()">
+            <svg id="icon-play" viewBox="0 0 24 24" width="28"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="icon-pause" viewBox="0 0 24 24" width="28" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+
+        <div class="control-group">
+            <button class="btn-btm" onclick="changeSpeed(-1)">-</button>
+            <span class="val-text" id="speed-val">0</span>
+            <button class="btn-btm" onclick="changeSpeed(1)">+</button>
+        </div>
+    </div>
+
+    <script>
+        let currentTranspose = 0;
+        let currentCapo = 0;
+        let isScrolling = false;
+        let scrollSpeedIndex = 0;
+        let fontSizeLevel = 18;
+        let animationFrameId;
+        let originalKey = 'C';
+        let isEditing = false;
+
+        const scale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const songId = urlParams.get('id');
+        let songs = JSON.parse(localStorage.getItem('my_chord_songs')) || [];
+        let song = songs.find(s => s.id == songId) || { id: 0, title: "Error", artist: "Unknown", content: "[C]No data" };
+
+        function updateOriginalKey() {
+            const firstChordMatch = song.content.match(/\[([A-G][#b]?[^\]]*)\]/);
+            originalKey = firstChordMatch ? firstChordMatch[1].replace(/[m\d\s\-\+]/g, '') : 'C';
+        }
+
+        function init() {
+            updateOriginalKey();
+            document.getElementById('song-header').innerHTML = `
+                <img src="${song.image || 'https://via.placeholder.com/150?text=No+Image'}" class="song-cover">
+                <div class="song-info-text">
+                    <h1>${song.title}</h1>
+                    <p>${song.artist}</p>
+                </div>`;
+            updateTopUI();
+            renderChords();
+        }
+
+        // --- ລະບົບແກ້ໄຂເນື້ອເພງ (Edit Mode) ---
+        function toggleEditMode() {
+            isEditing = !isEditing;
+            const chordContent = document.getElementById('chord-content');
+            const editContainer = document.getElementById('edit-container');
+            const bottomPanel = document.getElementById('bottom-panel');
+            const editTextarea = document.getElementById('edit-textarea');
+            const editBtn = document.getElementById('edit-btn');
+            const keyControls = document.getElementById('key-controls');
+
+            if (isEditing) {
+                if (isScrolling) toggleAutoScroll(); 
+                chordContent.style.display = 'none';
+                bottomPanel.style.display = 'none';
+                keyControls.style.opacity = '0.3'; 
+                keyControls.style.pointerEvents = 'none'; 
+                editContainer.style.display = 'block';
+                editBtn.style.background = 'var(--chord-color)';
+                editBtn.style.color = '#000';
+                editTextarea.value = song.content;
+            } else {
+                chordContent.style.display = 'block';
+                bottomPanel.style.display = 'flex';
+                keyControls.style.opacity = '1';
+                keyControls.style.pointerEvents = 'auto';
+                editContainer.style.display = 'none';
+                editBtn.style.background = 'transparent';
+                editBtn.style.color = '#aaa';
+            }
+        }
+
+        function saveSongEdit() {
+            const newContent = document.getElementById('edit-textarea').value;
+            
+            if (!newContent.trim()) {
+                alert("ກະລຸນາໃສ່ເນື້ອເພງ!");
+                return;
+            }
+
+            song.content = newContent;
+
+            const songIndex = songs.findIndex(s => s.id == songId);
+            if (songIndex !== -1) {
+                songs[songIndex].content = newContent;
+                localStorage.setItem('my_chord_songs', JSON.stringify(songs));
+            } else if (songId == null || songId == 0) {
+                alert("ບັນທຶກສະເພາະການສະແດງຜົນເທົ່ານັ້ນ (ບໍ່ພົບ ID ໃນຖານຂໍ້ມູນ)");
+            }
+
+            currentTranspose = 0;
+            currentCapo = 0;
+            updateOriginalKey();
+            
+            updateTopUI();
+            renderChords();
+            toggleEditMode();
+        }
+
+        // --- ລະບົບສະແດງຜົນຄອດ (Render) ---
+        function renderChords() {
+            const contentDiv = document.getElementById('chord-content');
+            contentDiv.innerHTML = ''; 
+            
+            const lines = song.content.split('\n');
+            lines.forEach(line => {
+                if (line.trim() === "") {
+                    contentDiv.appendChild(document.createElement('br'));
+                    return;
+                }
+
+                if (line.match(/^(Intro|Verse|Chorus|Solo|Bridge|Outro|ທ່ອນ|ຮ້ອງ)/i)) {
+                    const header = document.createElement('div');
+                    header.className = 'section-header';
+                    header.innerText = line.replace(/[\[\]]/g, '');
+                    contentDiv.appendChild(header);
+                    return;
+                }
+
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'lyric-line';
+                const parts = line.split(/(\[[^\]]+\])/g);
+                
+                parts.forEach((part, index) => {
+                    if (part.startsWith('[') && part.endsWith(']')) {
+                        const chordName = part.slice(1, -1);
+                        const group = document.createElement('div');
+                        group.className = 'word-group';
+                        
+                        const chordSpan = document.createElement('span');
+                        chordSpan.className = 'chord';
+                        chordSpan.innerText = transposeChordLogic(chordName, currentTranspose);
+                        
+                        const lyricSpan = document.createElement('span');
+                        lyricSpan.className = 'lyric';
+                        
+                        let nextPart = parts[index + 1];
+                        if (nextPart && !nextPart.startsWith('[')) {
+                            lyricSpan.innerText = nextPart;
+                            parts[index + 1] = ''; 
+                        } else { lyricSpan.innerHTML = '&nbsp;'; }
+                        
+                        group.appendChild(chordSpan);
+                        group.appendChild(lyricSpan);
+                        lineDiv.appendChild(group);
+                    } else if (part.trim() !== '') {
+                        const group = document.createElement('div');
+                        group.className = 'word-group';
+                        group.innerHTML = `<span class="chord" style="visibility:hidden">X</span><span class="lyric">${part}</span>`;
+                        lineDiv.appendChild(group);
+                    }
+                });
+                contentDiv.appendChild(lineDiv);
+            });
+        }
+
+        function transposeChordLogic(chord, steps) {
+            return chord.replace(/[A-G][#b]?/g, (match) => {
+                const map = {'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#'};
+                let root = map[match] || match;
+                let idx = scale.indexOf(root);
+                if (idx === -1) return match;
+                return scale[(idx + steps + 1200) % 12]; 
+            });
+        }
+
+        function changeTranspose(step) {
+            if(isEditing) return; 
+            currentTranspose += step;
+
+            if (currentTranspose >= 12 || currentTranspose <= -12) {
+                currentTranspose = 0;
+            }
+
+            if (currentTranspose === 0) {
+                currentCapo = 0;
+            } else if (currentTranspose > 0) {
+                currentCapo = 12 - currentTranspose;
+            } else {
+                currentCapo = Math.abs(currentTranspose);
+            }
+
+            updateTopUI();
+            renderChords();
+        }
+
+        function resetSettings() {
+            if(isEditing) return;
+            currentTranspose = 0;
+            currentCapo = 0;
+            updateTopUI();
+            renderChords();
+        }
+
+        function updateTopUI() {
+            const currentKeyName = transposeChordLogic(originalKey, currentTranspose);
+            let transText = currentTranspose > 0 ? `+${currentTranspose}` : currentTranspose;
+            if (currentTranspose === 0) transText = ""; else transText = `(${transText})`;
+            
+            document.getElementById('key-badge').innerText = `Key: ${currentKeyName} ${transText}`;
+            document.getElementById('capo-badge').innerText = `Capo: ${currentCapo}`;
+        }
+
+        function changeFontSize(step) {
+            fontSizeLevel = Math.max(12, Math.min(36, fontSizeLevel + step));
+            document.getElementById('chord-content').style.fontSize = fontSizeLevel + 'px';
+        }
+
+        function changeSpeed(step) {
+            scrollSpeedIndex = Math.max(-2, Math.min(5, scrollSpeedIndex + step));
+            document.getElementById('speed-val').innerText = scrollSpeedIndex;
+        }
+
+        function toggleAutoScroll() {
+            isScrolling = !isScrolling;
+            document.getElementById('icon-play').style.display = isScrolling ? 'none' : 'block';
+            document.getElementById('icon-pause').style.display = isScrolling ? 'block' : 'none';
+            if (isScrolling) autoScrollLoop(); else cancelAnimationFrame(animationFrameId);
+        }
+
+        function autoScrollLoop() {
+            if (!isScrolling) return;
+            const speedMap = {"-2":0.2, "-1":0.4, "0":0.8, "1":1.2, "2":1.8, "3":2.5, "4":3.5, "5":5};
+            window.scrollBy(0, speedMap[scrollSpeedIndex.toString()] || 0.8);
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) toggleAutoScroll();
+            else animationFrameId = requestAnimationFrame(autoScrollLoop);
+        }
+
+        init();
+
+        // --- JavaScript ສຳລັບປິດໜ້າ Loading Screen ---
+        window.addEventListener('load', function() {
+            const loader = document.getElementById('loading-screen');
+            // ໂຊໂລໂກ້ໄວ້ປະມານ 1.2 ວິນາທີ ເພື່ອໃຫ້ເຫັນອະນິເມຊັນງາມໆ ກ່ອນເຂົ້າໜ້າຫຼັກ
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                loader.style.visibility = 'hidden';
+            }, 1200); 
+        });
+    </script>
+</body>
+</html>
